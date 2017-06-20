@@ -1,0 +1,62 @@
+#!/bin/tcsh
+
+echo "hello world"
+
+cat kat.all.rpkm\
+  | cut -f1,2-4,5-7\
+  | ./get_pval_ttest.pl\
+  > ttest.t2
+
+cat kat.all.rpkm\
+  | cut -f1,2-4,8-10\
+  | ./get_pval_ttest.pl\
+  > ttest.t3
+
+cat kat.all.rpkm\
+  | cut -f1,2-4,11-13\
+  | ./get_pval_ttest.pl\
+  > ttest.t4
+
+cat kat.all.rpkm\
+  | cut -f1,2-4,14-16\
+  | ./get_pval_ttest.pl\
+  > ttest.t5
+
+cat kat.all.rpkm\
+  | cut -f1,2-4,17-19\
+  | ./get_pval_ttest.pl\
+  > ttest.t6
+
+cat kat.all.rpkm\
+  | cut -f1,2-4,20-22\
+  | ./get_pval_ttest.pl\
+  > ttest.t7
+
+foreach kind (t2 t3 t4 t5 t6 t7)
+  cat ttest.$kind\
+    | perl -ne 'split; if(($_[10] <= 0.05) && (abs($_[9]) >= 0.58)){print;}'\
+    > ttest.$kind.sig
+
+  cat ttest.$kind.sig\
+    | perl -ne 'split; if( (($_[7] >= 1) || ($_[8] >= 1)) && ($_[9] > 0) ){print;}'\
+    > ttest.$kind.sig.expr_up
+
+  cat ttest.$kind.sig\
+    | perl -ne 'split; if( (($_[7] >= 1) || ($_[8] >= 1)) && ($_[9] < 0) ){print;}'\
+    > ttest.$kind.sig.expr_down
+
+  foreach x (not_expr expr_up expr_down)
+    cut -f1 ttest.$kind.sig.$x\
+      | cut -f1 -d\. \
+      | sort\
+      | uniq\
+      > ttest.$kind.sig.$x.ids
+  end
+end
+
+foreach x (expr_up expr_down)
+  cat *.sig.$x.ids\
+    | sort\
+    | uniq\
+    > all.$x.ids
+end
